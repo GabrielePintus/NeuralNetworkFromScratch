@@ -80,7 +80,53 @@ Tensor Tensor::uniform(const std::vector<size_t>& shape, float low, float high) 
 // Operators
 // =============================================================
 
-Tensor Tensor::operator+(const Tensor& o) const { return zip(o, std::plus<float>()); }
+Tensor Tensor::operator+(const Tensor& other) const {
+    // If shapes match exactly, use element-wise addition
+    if (shape_ == other.shape_) {
+        return zip(other, std::plus<float>());
+    }
+    
+    // Handle broadcasting: (M, N) + (N,)
+    if (shape_.size() == 2 && other.shape_.size() == 1) {
+        if (shape_[1] == other.shape_[0]) {
+            return add_broadcast(other);
+        }
+    }
+    
+    // Handle broadcasting: (N,) + (M, N)
+    if (shape_.size() == 1 && other.shape_.size() == 2) {
+        if (shape_[0] == other.shape_[1]) {
+            return other.add_broadcast(*this);
+        }
+    }
+    
+    throw std::invalid_argument(
+        "Tensor Error: Incompatible shapes for addition. Broadcasting not supported for these shapes."
+    );
+}
+Tensor Tensor::add_broadcast(const Tensor& vec) const {
+    if (shape_.size() != 2) {
+        throw std::invalid_argument("add_broadcast: requires 2D tensor");
+    }
+    if (vec.shape_.size() != 1) {
+        throw std::invalid_argument("add_broadcast: requires 1D vector");
+    }
+    if (shape_[1] != vec.shape_[0]) {
+        throw std::invalid_argument("add_broadcast: vector size must match tensor columns");
+    }
+    
+    size_t rows = shape_[0];
+    size_t cols = shape_[1];
+    std::vector<float> result = data_;
+    
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            result[i * cols + j] += vec.data_[j];
+        }
+    }
+    
+    return Tensor(std::move(result), shape_);
+}
 Tensor Tensor::operator-(const Tensor& o) const { return zip(o, std::minus<float>()); }
 Tensor Tensor::operator*(const Tensor& o) const { return zip(o, std::multiplies<float>()); }
 Tensor Tensor::operator/(const Tensor& o) const { return zip(o, std::divides<float>()); }
@@ -89,6 +135,40 @@ Tensor Tensor::operator+(float v) const { return map([v](float x){ return x + v;
 Tensor Tensor::operator-(float v) const { return map([v](float x){ return x - v; }); }
 Tensor Tensor::operator*(float v) const { return map([v](float x){ return x * v; }); }
 Tensor Tensor::operator/(float v) const { return map([v](float x){ return x / v; }); }
+Tensor Tensor::softmax() const {
+    // Softmax along the last dimension
+    if (shape_.empty()) {
+        throw std::invalid_argument("Softmax requires at least 1D tensor.");
+    }
+    
+    size_t dim = shape_.back();
+    size_t outer_size = data_.size() / dim;
+    std::vector<float> result(data_.size());
+    
+    for (size_t i = 0; i < outer_size; ++i) {
+        // Find max for numerical stability
+        float max_val = data_[i * dim];
+        for (size_t j = 1; j < dim; ++j) {
+            if (data_[i * dim + j] > max_val) {
+                max_val = data_[i * dim + j];
+            }
+        }
+        
+        // Compute exponentials and sum
+        float sum_exp = 0.0f;
+        for (size_t j = 0; j < dim; ++j) {
+            result[i * dim + j] = std::exp(data_[i * dim + j] - max_val);
+            sum_exp += result[i * dim + j];
+        }
+        
+        // Normalize
+        for (size_t j = 0; j < dim; ++j) {
+            result[i * dim + j] /= sum_exp;
+        }
+    }
+    
+    return Tensor(std::move(result), shape_);
+}
 
 // =============================================================
 // Matrix Operations
@@ -171,19 +251,67 @@ Tensor Tensor::std() const {
 // =============================================================
 
 void Tensor::print() const {
-    std::cout << "Tensor shape=[";
+    std::cout << "Tensor(shape=[";
     for (size_t i = 0; i < shape_.size(); ++i) {
-        std::cout << shape_[i] << (i < shape_.size() - 1 ? " " : "");
+        std::cout << shape_[i];
+        if (i < shape_.size() - 1) std::cout << ", ";
     }
-    std::cout << "], data=[";
+    std::cout << "])\n";
     
-    size_t print_limit = 10;
-    for (size_t i = 0; i < std::min(data_.size(), print_limit); ++i) {
-        std::cout << std::fixed << std::setprecision(4) << data_[i] << " ";
+    if (shape_.empty()) {
+        std::cout << "[]\n";
+        return;
     }
     
-    if (data_.size() > print_limit) std::cout << "...";
-    std::cout << "]\n";
+    print_recursive(0, 0, 0);
+    std::cout << "\n";
 }
+
+
+
+void Tensor::print_recursive(size_t offset, size_t depth, size_t indent) const {
+    // Base case: print 1D array (innermost dimension)
+    if (depth == shape_.size() - 1) {
+        std::cout << "[";
+        size_t size = shape_[depth];
+        size_t max_print = std::min(size, size_t(10));
+        
+        for (size_t i = 0; i < max_print; ++i) {
+            std::cout << std::fixed << std::setprecision(4) << data_[offset + i];
+            if (i < max_print - 1) std::cout << ", ";
+        }
+        
+        if (size > max_print) {
+            std::cout << ", ... (" << (size - max_print) << " more)";
+        }
+        std::cout << "]";
+        return;
+    }
+    
+    // Recursive case: print higher dimensions
+    size_t current_dim_size = shape_[depth];
+    size_t stride = 1;
+    for (size_t i = depth + 1; i < shape_.size(); ++i) {
+        stride *= shape_[i];
+    }
+    
+    size_t max_print = std::min(current_dim_size, size_t(6));
+    
+    std::cout << "[";
+    for (size_t i = 0; i < max_print; ++i) {
+        if (i > 0) {
+            std::cout << ",\n" << std::string(indent + 1, ' ');
+        }
+        
+        print_recursive(offset + i * stride, depth + 1, indent + 1);
+    }
+    
+    if (current_dim_size > max_print) {
+        std::cout << ",\n" << std::string(indent + 1, ' ') << "...";
+    }
+    
+    std::cout << "]";
+}
+
 
 } // namespace lamp

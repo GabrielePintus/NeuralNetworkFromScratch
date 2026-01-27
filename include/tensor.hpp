@@ -82,6 +82,13 @@ public:
     Tensor operator+(const Tensor& other) const;
 
     /**
+     * @brief Add a 1D tensor (vector) to each row of a 2D tensor (broadcasting).
+     * @param vec The 1D tensor to broadcast.
+     * @return Tensor Result with vec added to each row.
+     */
+    Tensor add_broadcast(const Tensor& vec) const;
+
+    /**
      * @brief Element-wise subtraction.
      * @param other The tensor to subtract.
      * @return Tensor Result of (this - other).
@@ -129,6 +136,12 @@ public:
      * @param val The scalar value.
      */
     Tensor operator/(float val) const;
+
+    /**
+     * @brief Applies the Softmax function along the last dimension.
+     * @return Tensor The softmax-normalized tensor.
+     */
+    Tensor softmax() const;
 
     // =============================================================
     // Matrix Operations
@@ -246,6 +259,14 @@ private:
      * @return Tensor New tensor with combined values.
      */
     Tensor zip(const Tensor& other, std::function<float(float, float)> op) const;
+
+    /**
+     * @brief Recursively prints tensor in nested bracket notation.
+     * @param offset Starting index in flat data array.
+     * @param depth Current dimension depth.
+     * @param indent Indentation level for formatting.
+     */
+    void print_recursive(size_t offset, size_t depth, size_t indent) const;
 };
 
 } // namespace lamp
