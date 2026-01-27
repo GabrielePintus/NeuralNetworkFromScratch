@@ -39,3 +39,11 @@
 
 # debug information files
 *.dwo
+
+
+
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
