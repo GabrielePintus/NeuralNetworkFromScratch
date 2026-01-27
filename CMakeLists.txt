@@ -18,6 +18,8 @@ set(TEST_TARGET "test_linear" CACHE STRING "The test file to compile (test_tenso
 add_library(lamp 
     src/tensor.cpp 
     src/linear.cpp
+    src/module.cpp
+    src/optimizer.cpp
 )
 
 # 3. Check the variable and choose the source file

@@ -1,4 +1,5 @@
 #include "linear.hpp"
+#include "optimizer.hpp"
 
 #include <iostream>
 #include <string>
@@ -44,27 +45,25 @@ int main() {
     Tensor y_true({3.0f, 5.0f, 7.0f, 9.0f}, {4, 1}, false);
 
     Linear layer(1, 1);
-    auto& params = layer.parameters();
-    Tensor* weight = params.at("weight");
-    Tensor* bias = params.at("bias");
-
-    const float learning_rate = 0.05f;
+    const float learning_rate = 0.1f;
     const size_t steps = 200;
+    SGD optimizer(layer, learning_rate);
 
     for (size_t step = 0; step < steps; ++step) {
         Tensor preds = layer.forward(x);
         Tensor diff = preds - y_true;
         Tensor loss = (diff * diff).mean();
 
-        weight->zero_grad();
-        bias->zero_grad();
+        optimizer.zero_grad();
         loss.backward();
-
-        (*weight)[0] -= learning_rate * weight->grad()[0];
-        (*bias)[0] -= learning_rate * bias->grad()[0];
+        optimizer.step();
 
         print_progress(step + 1, steps, loss.data()[0]);
     }
+
+    auto& params = layer.parameters();
+    Tensor* weight = params.at("weight");
+    Tensor* bias = params.at("bias");
 
     std::cout << "\nFinal parameters:\n";
     print_vector(weight->data(), "w:");
