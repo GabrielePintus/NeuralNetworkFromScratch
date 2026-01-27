@@ -1,0 +1,251 @@
+/**
+ * @file tensor.hpp
+ * @brief A simple, forward-only Tensor library for C++.
+ * @author Lamp Project
+ * @version 1.0
+ */
+
+#pragma once
+
+#include <vector>
+#include <iostream>
+#include <functional>
+#include <numeric>
+#include <algorithm>
+#include <cmath>
+
+namespace lamp {
+
+/**
+ * @class Tensor
+ * @brief A multi-dimensional array class for numerical operations.
+ * * This class provides a basic implementation of a tensor supporting:
+ * - Element-wise arithmetic
+ * - Matrix multiplication
+ * - Activation functions (ReLU, Sigmoid)
+ * - Basic statistical reductions
+ * * @note This implementation does not support automatic differentiation (Autograd).
+ */
+class Tensor {
+public:
+    /**
+     * @brief Construct a new Tensor object.
+     * * @param data A flat vector containing the numeric values.
+     * @param shape A vector describing the dimensions (e.g., {rows, cols}).
+     * @throw std::invalid_argument If data size does not match the product of shape dimensions.
+     */
+    Tensor(std::vector<float> data, std::vector<size_t> shape);
+
+    // =============================================================
+    // Factory Methods
+    // =============================================================
+
+    /**
+     * @brief Creates a tensor filled with zeros.
+     * @param shape The target dimensions.
+     * @return Tensor A tensor initialized with 0.0f.
+     */
+    static Tensor zeros(const std::vector<size_t>& shape);
+
+    /**
+     * @brief Creates a tensor filled with ones.
+     * @param shape The target dimensions.
+     * @return Tensor A tensor initialized with 1.0f.
+     */
+    static Tensor ones(const std::vector<size_t>& shape);
+
+    /**
+     * @brief Creates a tensor with random values from a Normal Distribution.
+     * @param shape The target dimensions.
+     * @return Tensor A tensor with values ~ N(0, 1).
+     */
+    static Tensor randn(const std::vector<size_t>& shape);
+
+    /**
+     * @brief Creates a tensor with random values from a Uniform Distribution.
+     * @param shape The target dimensions.
+     * @param low The lower bound (inclusive).
+     * @param high The upper bound (exclusive).
+     * @return Tensor A tensor with values in [low, high).
+     */
+    static Tensor uniform(const std::vector<size_t>& shape, float low = 0.0f, float high = 1.0f);
+
+    // =============================================================
+    // Arithmetic Operators
+    // =============================================================
+
+    /**
+     * @brief Element-wise addition.
+     * @param other The tensor to add.
+     * @return Tensor Result of (this + other).
+     */
+    Tensor operator+(const Tensor& other) const;
+
+    /**
+     * @brief Element-wise subtraction.
+     * @param other The tensor to subtract.
+     * @return Tensor Result of (this - other).
+     */
+    Tensor operator-(const Tensor& other) const;
+
+    /**
+     * @brief Element-wise multiplication (Hadamard product).
+     * @param other The tensor to multiply.
+     * @return Tensor Result of (this * other).
+     */
+    Tensor operator*(const Tensor& other) const;
+
+    /**
+     * @brief Element-wise division.
+     * @param other The denominator tensor.
+     * @return Tensor Result of (this / other).
+     */
+    Tensor operator/(const Tensor& other) const;
+
+    // =============================================================
+    // Scalar Operators
+    // =============================================================
+
+    /**
+     * @brief Add a scalar to every element.
+     * @param val The scalar value.
+     */
+    Tensor operator+(float val) const;
+
+    /**
+     * @brief Subtract a scalar from every element.
+     * @param val The scalar value.
+     */
+    Tensor operator-(float val) const;
+
+    /**
+     * @brief Multiply every element by a scalar.
+     * @param val The scalar value.
+     */
+    Tensor operator*(float val) const;
+
+    /**
+     * @brief Divide every element by a scalar.
+     * @param val The scalar value.
+     */
+    Tensor operator/(float val) const;
+
+    // =============================================================
+    // Matrix Operations
+    // =============================================================
+
+    /**
+     * @brief Performs Matrix Multiplication.
+     * * Requires both tensors to be 2-dimensional.
+     * Shapes must satisfy (M, K) @ (K, N) -> (M, N).
+     * * @param other The right-hand side operand.
+     * @return Tensor The resulting matrix product.
+     * @throw std::invalid_argument If shapes are incompatible or tensors are not 2D.
+     */
+    Tensor matmul(const Tensor& other) const;
+
+    /**
+     * @brief Transposes a 2D tensor.
+     * Switches dimensions from (rows, cols) to (cols, rows).
+     * @return Tensor The transposed tensor.
+     */
+    Tensor transpose() const;
+
+    // =============================================================
+    // Activations & Reductions
+    // =============================================================
+
+    /**
+     * @brief Applies Rectified Linear Unit function element-wise.
+     * f(x) = max(0, x)
+     * @return Tensor
+     */
+    Tensor relu() const;
+
+    /**
+     * @brief Applies Sigmoid function element-wise.
+     * f(x) = 1 / (1 + exp(-x))
+     * @return Tensor
+     */
+    Tensor sigmoid() const;
+
+    /**
+     * @brief Sums all elements in the tensor.
+     * @return Tensor A 1D tensor of size 1 containing the sum.
+     */
+    Tensor sum() const;
+
+    /**
+     * @brief Computes the mean of all elements.
+     * @return Tensor A 1D tensor of size 1 containing the mean.
+     */
+    Tensor mean() const;
+
+    /**
+     * @brief Computes the standard deviation of all elements.
+     * @return Tensor A 1D tensor of size 1 containing the standard deviation.
+     */
+    Tensor std() const;
+
+    // =============================================================
+    // Utilities & Accessors
+    // =============================================================
+
+    /**
+     * @brief Prints the tensor shape and data to stdout.
+     */
+    void print() const;
+
+    /**
+     * @brief Get the underlying flat data vector.
+     * @return const std::vector<float>& 
+     */
+    const std::vector<float>& data() const { return data_; }
+
+    /**
+     * @brief Get the shape vector.
+     * @return const std::vector<size_t>& 
+     */
+    const std::vector<size_t>& shape() const { return shape_; }
+
+    /**
+     * @brief Access element by flat index (mutable).
+     * @param i Index.
+     * @return float& Reference to value.
+     */
+    float& operator[](size_t i) { return data_[i]; }
+
+    /**
+     * @brief Access element by flat index (const).
+     * @param i Index.
+     * @return const float& Value.
+     */
+    const float& operator[](size_t i) const { return data_[i]; }
+
+private:
+    std::vector<float> data_;    ///< Flat storage of tensor data
+    std::vector<size_t> shape_;  ///< Dimensions of the tensor
+
+    /**
+     * @brief Validates that data size matches shape dimensions.
+     * @throw std::invalid_argument if mismatch.
+     */
+    void validate() const;
+
+    /**
+     * @brief Applies a unary function to every element.
+     * @param op Function taking float returning float.
+     * @return Tensor New tensor with mapped values.
+     */
+    Tensor map(std::function<float(float)> op) const;
+
+    /**
+     * @brief Applies a binary function to two tensors element-wise.
+     * @param other The second tensor.
+     * @param op Function taking two floats returning float.
+     * @return Tensor New tensor with combined values.
+     */
+    Tensor zip(const Tensor& other, std::function<float(float, float)> op) const;
+};
+
+} // namespace lamp
