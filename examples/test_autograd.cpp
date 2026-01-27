@@ -1,7 +1,9 @@
 #include "linear.hpp"
 #include "optimizer.hpp"
+#include "sequential.hpp"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -44,13 +46,15 @@ int main() {
     Tensor x({1.0f, 2.0f, 3.0f, 4.0f}, {4, 1}, false);
     Tensor y_true({3.0f, 5.0f, 7.0f, 9.0f}, {4, 1}, false);
 
-    Linear layer(1, 1);
-    const float learning_rate = 0.1f;
+    auto first = std::make_shared<Linear>(1, 32);
+    auto second = std::make_shared<Linear>(32, 1);
+    Sequential model({first, second});
+    const float learning_rate = 0.001f;
     const size_t steps = 200;
-    SGD optimizer(layer, learning_rate);
+    SGD optimizer(model, learning_rate);
 
     for (size_t step = 0; step < steps; ++step) {
-        Tensor preds = layer.forward(x);
+        Tensor preds = model.forward(x);
         Tensor diff = preds - y_true;
         Tensor loss = (diff * diff).mean();
 
@@ -61,9 +65,9 @@ int main() {
         print_progress(step + 1, steps, loss.data()[0]);
     }
 
-    auto& params = layer.parameters();
-    Tensor* weight = params.at("weight");
-    Tensor* bias = params.at("bias");
+    auto& params = model.parameters();
+    Tensor* weight = params.at("0.weight");
+    Tensor* bias = params.at("0.bias");
 
     std::cout << "\nFinal parameters:\n";
     print_vector(weight->data(), "w:");

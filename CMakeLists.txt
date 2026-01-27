@@ -19,6 +19,7 @@ add_library(lamp
     src/tensor.cpp 
     src/linear.cpp
     src/module.cpp
+    src/sequential.cpp
     src/optimizer.cpp
 )
 
