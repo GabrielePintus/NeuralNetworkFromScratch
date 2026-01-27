@@ -11,6 +11,10 @@ Linear::Linear(size_t in_features, size_t out_features, bool bias)
       bias_(Tensor::zeros({out_features_})) {
     
     init_parameters();
+    weight_.set_requires_grad(true);
+    if (use_bias_) {
+        bias_.set_requires_grad(true);
+    }
     
     // Register parameters
     register_parameter("weight", weight_);
