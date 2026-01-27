@@ -1,6 +1,6 @@
 /**
  * @file tensor.hpp
- * @brief A simple, forward-only Tensor library for C++.
+ * @brief A simple Tensor library for C++ with autograd support.
  * @author Lamp Project
  * @version 1.0
  */
@@ -13,18 +13,18 @@
 #include <numeric>
 #include <algorithm>
 #include <cmath>
+#include <memory>
 
 namespace lamp {
 
 /**
  * @class Tensor
- * @brief A multi-dimensional array class for numerical operations.
+ * @brief A multi-dimensional array class for numerical operations with autograd support.
  * * This class provides a basic implementation of a tensor supporting:
  * - Element-wise arithmetic
  * - Matrix multiplication
  * - Activation functions (ReLU, Sigmoid)
  * - Basic statistical reductions
- * * @note This implementation does not support automatic differentiation (Autograd).
  */
 class Tensor {
 public:
@@ -34,7 +34,7 @@ public:
      * @param shape A vector describing the dimensions (e.g., {rows, cols}).
      * @throw std::invalid_argument If data size does not match the product of shape dimensions.
      */
-    Tensor(std::vector<float> data, std::vector<size_t> shape);
+    Tensor(std::vector<float> data, std::vector<size_t> shape, bool requires_grad = false);
 
     // =============================================================
     // Factory Methods
@@ -138,6 +138,13 @@ public:
     Tensor operator/(float val) const;
 
     /**
+     * @brief Element-wise exponentiation.
+     * @param power The exponent value.
+     * @return Tensor Result of raising each element to the given power.
+     */
+    Tensor pow(float power) const;
+
+    /**
      * @brief Applies the Softmax function along the last dimension.
      * @return Tensor The softmax-normalized tensor.
      */
@@ -201,6 +208,38 @@ public:
     Tensor std() const;
 
     // =============================================================
+    // Autograd
+    // =============================================================
+
+    /**
+     * @brief Enable or disable gradient tracking.
+     * @param requires_grad True to track gradients.
+     */
+    void set_requires_grad(bool requires_grad);
+
+    /**
+     * @brief Returns true if this tensor tracks gradients.
+     */
+    bool requires_grad() const;
+
+    /**
+     * @brief Access the gradient buffer.
+     * @return const std::vector<float>& 
+     */
+    const std::vector<float>& grad() const;
+
+    /**
+     * @brief Zeros out the gradient buffer.
+     */
+    void zero_grad();
+
+    /**
+     * @brief Runs backpropagation starting from this tensor.
+     * * If no gradient exists, seeds with ones.
+     */
+    void backward();
+
+    // =============================================================
     // Utilities & Accessors
     // =============================================================
 
@@ -213,37 +252,50 @@ public:
      * @brief Get the underlying flat data vector.
      * @return const std::vector<float>& 
      */
-    const std::vector<float>& data() const { return data_; }
+    const std::vector<float>& data() const;
 
     /**
      * @brief Get the shape vector.
      * @return const std::vector<size_t>& 
      */
-    const std::vector<size_t>& shape() const { return shape_; }
+    const std::vector<size_t>& shape() const;
 
     /**
      * @brief Access element by flat index (mutable).
      * @param i Index.
      * @return float& Reference to value.
      */
-    float& operator[](size_t i) { return data_[i]; }
+    float& operator[](size_t i);
 
     /**
      * @brief Access element by flat index (const).
      * @param i Index.
      * @return const float& Value.
      */
-    const float& operator[](size_t i) const { return data_[i]; }
+    const float& operator[](size_t i) const;
 
 private:
-    std::vector<float> data_;    ///< Flat storage of tensor data
-    std::vector<size_t> shape_;  ///< Dimensions of the tensor
+    struct TensorNode {
+        std::vector<float> data;
+        std::vector<size_t> shape;
+        std::vector<float> grad;
+        bool requires_grad = false;
+        std::function<void()> backward;
+        std::vector<std::shared_ptr<TensorNode>> parents;
+    };
+
+    std::shared_ptr<TensorNode> node_; ///< Shared storage for tensor data + autograd
 
     /**
      * @brief Validates that data size matches shape dimensions.
      * @throw std::invalid_argument if mismatch.
      */
     void validate() const;
+
+    /**
+     * @brief Ensure the gradient buffer exists and is zeroed if requested.
+     */
+    void ensure_grad(bool zero = false);
 
     /**
      * @brief Applies a unary function to every element.

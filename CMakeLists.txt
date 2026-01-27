@@ -29,6 +29,10 @@ elseif(TEST_TARGET STREQUAL "test_linear")
     message(STATUS "Compiling Target: test_linear.cpp")
     add_executable(run_test examples/test_linear.cpp)
 
+elseif(TEST_TARGET STREQUAL "test_autograd")
+    message(STATUS "Compiling Target: test_autograd.cpp")
+    add_executable(run_test examples/test_autograd.cpp)
+
 else()
     message(FATAL_ERROR "Unknown TEST_TARGET: ${TEST_TARGET}. Valid options are: test_tensor, test_linear")
 endif()
