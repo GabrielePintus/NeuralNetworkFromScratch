@@ -114,6 +114,11 @@ void Adam::step() {
 }
  
 void Adam::zero_grad() {
+    for (Tensor* param : params_) {
+        if (param) {
+            param->zero_grad();
+        }
+    }
 }
  
 } // namespace lamp

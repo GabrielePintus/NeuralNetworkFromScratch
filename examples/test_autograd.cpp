@@ -61,7 +61,7 @@ int main() {
     const float noise = 0.1f;
     auto [X, y] = make_moons(n_samples, noise);
  
-    std::cout << "Generated " << n_samples << " spiral samples\n";
+    std::cout << "Generated " << n_samples << " moon samples\n";
     std::cout << "X shape: (" << X.shape()[0] << ", " << X.shape()[1] << ")\n";
     std::cout << "y shape: (" << y.shape()[0] << ", " << y.shape()[1] << ")\n\n";
  
