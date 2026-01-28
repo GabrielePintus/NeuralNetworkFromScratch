@@ -28,10 +28,13 @@ void Linear::init_parameters() {
     // std = sqrt(2 / in_features)
     float std = std::sqrt(2.0f / in_features_);
     weight_ = Tensor::randn({out_features_, in_features_}) * std;
+
+    // Clamp values to avoid extreme initializations
+    weight_ = weight_.clamp(-2 * std, 2 * std);
     
     if (use_bias_) {
         // Initialize bias to small random values
-        bias_ = Tensor::uniform({out_features_}, -0.01f, 0.01f);
+        bias_ = Tensor::randn({out_features_}) * 0.01f;
     }
 }
 

@@ -56,12 +56,13 @@ int main() {
     std::cout << "=== Moons Classification with DataLoader ===\n\n";
  
     // Generate moons dataset
-    const size_t n_samples = 500;
-    const size_t n_classes = 2;  // Binary classification
+    const size_t n_samples = 1000;
+    const size_t n_classes = 5;  // Binary classification
     const float noise = 0.1f;
-    auto [X, y] = make_moons(n_samples, noise);
+    // auto [X, y] = make_moons(n_samples, noise);
+    auto [X, y] = make_spirals(n_samples, n_classes, noise);
  
-    std::cout << "Generated " << n_samples << " moon samples\n";
+    std::cout << "Generated " << n_samples << " spiral samples\n";
     std::cout << "X shape: (" << X.shape()[0] << ", " << X.shape()[1] << ")\n";
     std::cout << "y shape: (" << y.shape()[0] << ", " << y.shape()[1] << ")\n\n";
  
@@ -72,22 +73,22 @@ int main() {
  
     std::cout << "DataLoader: " << dataloader.num_batches() << " batches of size " << batch_size << "\n\n";
  
-    // Build classifier: 2 -> 32 -> 32 -> 1
-    auto layer1 = std::make_shared<Linear>(2, 32);
-    auto relu1 = std::make_shared<ReLU>();
-    auto layer2 = std::make_shared<Linear>(32, 32);
-    auto relu2 = std::make_shared<ReLU>();
-    auto layer3 = std::make_shared<Linear>(32, 1);
+    // Build classifier: 2 -> 64 -> 32 -> 5
+    auto layer1  = std::make_shared<Linear>(2, 64);
+    auto relu1   = std::make_shared<ReLU>();
+    auto layer2  = std::make_shared<Linear>(64, 32);
+    auto relu2   = std::make_shared<ReLU>();
+    auto layer3  = std::make_shared<Linear>(32, 5);
     auto sigmoid = std::make_shared<Sigmoid>();
  
     Sequential model({layer1, relu1, layer2, relu2, layer3, sigmoid});
  
     // Loss and optimizer
-    BCELoss criterion;
+    CrossEntropyLoss criterion;
     Adam optimizer(model, 0.01f);
  
     // Training loop
-    const size_t epochs = 100;
+    const size_t epochs = 400;
  
     std::cout << "Training for " << epochs << " epochs...\n";
  
