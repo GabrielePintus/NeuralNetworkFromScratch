@@ -571,6 +571,101 @@ Tensor Tensor::sigmoid() const {
     return out;
 }
 
+Tensor Tensor::tanh() const {
+    auto out = map([](float x) { return std::tanh(x); });
+    if (out.node_->requires_grad) {
+        auto out_node = out.node_;
+        auto parent = node_;
+        out_node->parents = {parent};
+        out_node->backward = [out_node, parent]() {
+            if (!parent->requires_grad) {
+                return;
+            }
+            if (parent->grad.empty()) {
+                parent->grad.assign(parent->data.size(), 0.0f);
+            }
+            for (size_t i = 0; i < parent->data.size(); ++i) {
+                float tanh_val = out_node->data[i];
+                // d/dx tanh(x) = 1 - tanh^2(x)
+                parent->grad[i] += out_node->grad[i] * (1.0f - tanh_val * tanh_val);
+            }
+        };
+    }
+    return out;
+}
+ 
+Tensor Tensor::log() const {
+    auto out = map([](float x) { return std::log(x); });
+    if (out.node_->requires_grad) {
+        auto out_node = out.node_;
+        auto parent = node_;
+        out_node->parents = {parent};
+        out_node->backward = [out_node, parent]() {
+            if (!parent->requires_grad) {
+                return;
+            }
+            if (parent->grad.empty()) {
+                parent->grad.assign(parent->data.size(), 0.0f);
+            }
+            for (size_t i = 0; i < parent->data.size(); ++i) {
+                // d/dx log(x) = 1/x
+                parent->grad[i] += out_node->grad[i] / parent->data[i];
+            }
+        };
+    }
+    return out;
+}
+ 
+Tensor Tensor::clamp(float min_val, float max_val) const {
+    auto out = map([min_val, max_val](float x) {
+        return std::min(std::max(x, min_val), max_val);
+    });
+    if (out.node_->requires_grad) {
+        auto out_node = out.node_;
+        auto parent = node_;
+        out_node->parents = {parent};
+        out_node->backward = [out_node, parent, min_val, max_val]() {
+            if (!parent->requires_grad) {
+                return;
+            }
+            if (parent->grad.empty()) {
+                parent->grad.assign(parent->data.size(), 0.0f);
+            }
+            for (size_t i = 0; i < parent->data.size(); ++i) {
+                // Gradient is 1 if within bounds, 0 otherwise
+                float x = parent->data[i];
+                float grad = (x > min_val && x < max_val) ? out_node->grad[i] : 0.0f;
+                parent->grad[i] += grad;
+            }
+        };
+    }
+    return out;
+}
+ 
+Tensor Tensor::leaky_relu(float negative_slope) const {
+    auto out = map([negative_slope](float x) {
+        return x > 0.0f ? x : negative_slope * x;
+    });
+    if (out.node_->requires_grad) {
+        auto out_node = out.node_;
+        auto parent = node_;
+        out_node->parents = {parent};
+        out_node->backward = [out_node, parent, negative_slope]() {
+            if (!parent->requires_grad) {
+                return;
+            }
+            if (parent->grad.empty()) {
+                parent->grad.assign(parent->data.size(), 0.0f);
+            }
+            for (size_t i = 0; i < parent->data.size(); ++i) {
+                float grad = parent->data[i] > 0.0f ? out_node->grad[i] : negative_slope * out_node->grad[i];
+                parent->grad[i] += grad;
+            }
+        };
+    }
+    return out;
+}
+
 Tensor Tensor::sum() const {
     float total = std::accumulate(node_->data.begin(), node_->data.end(), 0.0f);
     Tensor out({total}, {1}, node_->requires_grad);

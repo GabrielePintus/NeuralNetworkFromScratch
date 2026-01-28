@@ -190,6 +190,37 @@ public:
     Tensor sigmoid() const;
 
     /**
+     * @brief Applies Tanh function element-wise.
+     * f(x) = (exp(x) - exp(-x)) / (exp(x) + exp(-x))
+     * @return Tensor
+     */
+    Tensor tanh() const;
+ 
+    /**
+     * @brief Applies natural logarithm element-wise.
+     * f(x) = log(x)
+     * @return Tensor
+     */
+    Tensor log() const;
+ 
+    /**
+     * @brief Applies element-wise clamp.
+     * f(x) = min(max(x, min_val), max_val)
+     * @param min_val Minimum value.
+     * @param max_val Maximum value.
+     * @return Tensor
+     */
+    Tensor clamp(float min_val, float max_val) const;
+ 
+    /**
+     * @brief Applies leaky ReLU element-wise.
+     * f(x) = x if x > 0, else alpha * x
+     * @param negative_slope The slope for negative values.
+     * @return Tensor
+     */
+    Tensor leaky_relu(float negative_slope = 0.01f) const;
+
+    /**
      * @brief Sums all elements in the tensor.
      * @return Tensor A 1D tensor of size 1 containing the sum.
      */

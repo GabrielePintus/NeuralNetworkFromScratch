@@ -15,12 +15,16 @@ include_directories(include)
 set(TEST_TARGET "test_linear" CACHE STRING "The test file to compile (test_tensor or test_linear)")
 
 # 2. Always build the core library
-add_library(lamp 
-    src/tensor.cpp 
+add_library(lamp
+    src/tensor.cpp
     src/linear.cpp
     src/module.cpp
     src/sequential.cpp
     src/optimizer.cpp
+    src/losses.cpp
+    src/activations.cpp
+    src/data_utils.cpp
+    src/dataloader.cpp
 )
 
 # 3. Check the variable and choose the source file
