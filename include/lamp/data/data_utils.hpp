@@ -1,8 +1,15 @@
+/**
+ * @file data_utils.hpp
+ * @brief Utilities for generating synthetic datasets.
+ * @author Lamp Project
+ * @version 1.0
+ */
+
 #pragma once
- 
+
 #include "lamp/core/tensor.hpp"
 #include <utility>
- 
+
 namespace lamp {
 namespace data {
  

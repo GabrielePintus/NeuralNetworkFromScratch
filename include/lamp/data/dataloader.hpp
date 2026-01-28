@@ -1,11 +1,18 @@
+/**
+ * @file dataloader.hpp
+ * @brief Dataset and DataLoader classes for batched data iteration.
+ * @author Lamp Project
+ * @version 1.0
+ */
+
 #pragma once
- 
+
 #include "lamp/core/tensor.hpp"
 #include <vector>
 #include <memory>
 #include <random>
 #include <algorithm>
- 
+
 namespace lamp {
 namespace data {
  

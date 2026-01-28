@@ -1,11 +1,16 @@
-#pragma once
+/**
+ * @file optimizer.hpp
+ * @brief Optimization algorithms for neural network training.
+ * @author Lamp Project
+ * @version 1.0
+ */
 
+#pragma once
 
 #include "lamp/nn/module.hpp"
 #include <vector>
 #include <unordered_map>
- 
- 
+
 namespace lamp {
 namespace optim {
  
@@ -13,18 +18,41 @@ namespace optim {
  * @brief Stochastic Gradient Descent optimizer.
  *
  * Updates parameters using: θ = θ - lr * ∇θ
+ * where lr is the learning rate and ∇θ are the gradients.
  */
 class SGD {
 public:
+    /**
+     * @brief Construct SGD optimizer from a module's parameters.
+     *
+     * @param module The module whose parameters to optimize.
+     * @param learning_rate Step size for parameter updates.
+     */
     SGD(nn::Module& module, float learning_rate);
+
+    /**
+     * @brief Construct SGD optimizer from a list of parameters.
+     *
+     * @param params Vector of pointers to tensors to optimize.
+     * @param learning_rate Step size for parameter updates.
+     */
     SGD(const std::vector<Tensor*>& params, float learning_rate);
- 
+
+    /**
+     * @brief Perform one optimization step.
+     *
+     * Updates all parameters based on their gradients.
+     */
     void step();
+
+    /**
+     * @brief Zero out all parameter gradients.
+     */
     void zero_grad();
- 
+
 private:
-    std::vector<Tensor*> params_;
-    float learning_rate_;
+    std::vector<Tensor*> params_;  ///< Parameters to optimize
+    float learning_rate_;          ///< Learning rate
 };
  
  
