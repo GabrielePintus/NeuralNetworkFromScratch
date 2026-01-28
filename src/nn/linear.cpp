@@ -1,7 +1,8 @@
-#include "linear.hpp"
+#include "lamp/nn/linear.hpp"
 #include <cmath>
 
 namespace lamp {
+namespace nn {
 
 Linear::Linear(size_t in_features, size_t out_features, bool bias)
     : in_features_(in_features),
@@ -55,4 +56,5 @@ Tensor Linear::forward(const Tensor& input) {
     return output;
 }
 
+} // namespace nn
 } // namespace lamp

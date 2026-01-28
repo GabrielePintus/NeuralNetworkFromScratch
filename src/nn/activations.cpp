@@ -1,7 +1,8 @@
-#include "activations.hpp"
+#include "lamp/nn/activations.hpp"
  
 namespace lamp {
- 
+namespace nn {
+
 // =============================================================
 // ReLU
 // =============================================================
@@ -44,5 +45,5 @@ Tensor LeakyReLU::forward(const Tensor& input) {
     return input.leaky_relu(negative_slope_);
 }
  
+} // namespace nn
 } // namespace lamp
- 

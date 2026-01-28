@@ -1,12 +1,13 @@
 #pragma once
 
 
-#include "tensor.hpp"
+#include "lamp/core/tensor.hpp"
 #include <unordered_map>
 #include <string>
 
 
 namespace lamp {
+namespace nn {
 
 
 class Module {
@@ -43,4 +44,5 @@ std::unordered_map<std::string, Tensor*> parameters_;
 };
 
 
+} // namespace nn
 } // namespace lamp

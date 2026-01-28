@@ -1,13 +1,13 @@
 #pragma once
 
 
-#include "module.hpp"
+#include "lamp/nn/module.hpp"
 #include <vector>
 #include <unordered_map>
  
  
 namespace lamp {
- 
+namespace optim {
  
 /**
  * @brief Stochastic Gradient Descent optimizer.
@@ -16,7 +16,7 @@ namespace lamp {
  */
 class SGD {
 public:
-    SGD(Module& module, float learning_rate);
+    SGD(nn::Module& module, float learning_rate);
     SGD(const std::vector<Tensor*>& params, float learning_rate);
  
     void step();
@@ -49,7 +49,7 @@ public:
      * @param beta2 Exponential decay rate for second moment (default: 0.999).
      * @param eps Small constant for numerical stability (default: 1e-8).
      */
-    Adam(Module& module, float learning_rate = 0.001f, float beta1 = 0.9f,
+    Adam(nn::Module& module, float learning_rate = 0.001f, float beta1 = 0.9f,
          float beta2 = 0.999f, float eps = 1e-8f);
  
     /**
@@ -86,4 +86,6 @@ private:
  
 };
 
+
+} // namespace optim
 } // namespace lamp

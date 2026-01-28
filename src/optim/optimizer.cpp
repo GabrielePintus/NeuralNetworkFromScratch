@@ -1,13 +1,14 @@
-#include "optimizer.hpp"
+#include "lamp/optim/optimizer.hpp"
 #include <cmath>
  
 namespace lamp {
+namespace optim {
  
 // =============================================================
 // SGD Implementation
 // =============================================================
  
-SGD::SGD(Module& module, float learning_rate)
+SGD::SGD(nn::Module& module, float learning_rate)
     : learning_rate_(learning_rate) {
     for (const auto& entry : module.parameters()) {
         params_.push_back(entry.second);
@@ -45,7 +46,7 @@ void SGD::zero_grad() {
 // Adam Implementation
 // =============================================================
  
-Adam::Adam(Module& module, float learning_rate, float beta1, float beta2, float eps)
+Adam::Adam(nn::Module& module, float learning_rate, float beta1, float beta2, float eps)
     : learning_rate_(learning_rate),
       beta1_(beta1),
       beta2_(beta2),
@@ -121,4 +122,5 @@ void Adam::zero_grad() {
     }
 }
  
+} // namespace optim
 } // namespace lamp

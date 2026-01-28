@@ -1,6 +1,6 @@
 #pragma once
  
-#include "tensor.hpp"
+#include "lamp/core/tensor.hpp"
 #include <utility>
  
 namespace lamp {

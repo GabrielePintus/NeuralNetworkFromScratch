@@ -1,6 +1,7 @@
-#include "module.hpp"
+#include "lamp/nn/module.hpp"
 
 namespace lamp {
+namespace nn {
 
 Module::~Module() = default;
 
@@ -36,4 +37,5 @@ std::unordered_map<std::string, Tensor*>& Module::parameters() {
     return parameters_;
 }
 
+} // namespace nn
 } // namespace lamp

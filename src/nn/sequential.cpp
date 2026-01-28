@@ -1,7 +1,8 @@
-#include "sequential.hpp"
+#include "lamp/nn/sequential.hpp"
 #include <string> // Required for std::to_string
 
 namespace lamp {
+namespace nn {
 
 Sequential::Sequential(std::initializer_list<std::shared_ptr<Module>> modules) {
     size_t index = 0;
@@ -40,4 +41,5 @@ void Sequential::register_submodule_parameters(const std::string& prefix, Module
     }
 }
 
+} // namespace nn
 } // namespace lamp

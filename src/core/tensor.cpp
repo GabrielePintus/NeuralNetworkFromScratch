@@ -3,7 +3,7 @@
  * @brief Implementation of the Tensor class.
  */
 
-#include "tensor.hpp"
+#include "lamp/core/tensor.hpp"
 #include <random>
 #include <iomanip>
 #include <unordered_set>

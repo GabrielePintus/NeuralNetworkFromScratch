@@ -1,4 +1,4 @@
-#include "data_utils.hpp"
+#include "lamp/data/data_utils.hpp"
 #include <random>
 #include <cmath>
  

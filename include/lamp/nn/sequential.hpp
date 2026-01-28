@@ -1,12 +1,13 @@
 #pragma once
 
-#include "module.hpp"
+#include "lamp/nn/module.hpp"
 #include <initializer_list>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace lamp {
+namespace nn {
 
 class Sequential : public Module {
 public:
@@ -26,4 +27,5 @@ private:
     std::vector<std::shared_ptr<Module>> modules_;
 };
 
+} // namespace nn
 } // namespace lamp

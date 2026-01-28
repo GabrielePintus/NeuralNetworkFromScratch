@@ -1,11 +1,11 @@
-#include "linear.hpp"
-#include "optimizer.hpp"
-#include "sequential.hpp"
-#include "activations.hpp"
-#include "losses.hpp"
-#include "data_utils.hpp"
-#include "dataloader.hpp"
- 
+#include "lamp/nn/linear.hpp"
+#include "lamp/optim/optimizer.hpp"
+#include "lamp/nn/sequential.hpp"
+#include "lamp/nn/activations.hpp"
+#include "lamp/nn/losses.hpp"
+#include "lamp/data/data_utils.hpp"
+#include "lamp/data/dataloader.hpp"
+
 #include <iostream>
 #include <memory>
 #include <string>
@@ -94,17 +94,17 @@ int main() {
  
     std::cout << "DataLoader: " << dataloader.num_batches() << " batches of size " << batch_size << "\n\n";
  
-    Sequential model({
-        std::make_shared<Linear>(2, 64),
-        std::make_shared<ReLU>(),
-        std::make_shared<Linear>(64, 32),
-        std::make_shared<ReLU>(),
-        std::make_shared<Linear>(32, n_classes)
+    nn::Sequential model({
+        std::make_shared<nn::Linear>(2, 64),
+        std::make_shared<nn::ReLU>(),
+        std::make_shared<nn::Linear>(64, 32),
+        std::make_shared<nn::ReLU>(),
+        std::make_shared<nn::Linear>(32, n_classes)
     });
  
     // Loss and optimizer
-    CrossEntropyLoss criterion;
-    Adam optimizer(model, 0.001f);
+    nn::CrossEntropyLoss criterion;
+    optim::Adam optimizer(model, 0.001f);
  
     // Training loop
     const size_t epochs = 500;

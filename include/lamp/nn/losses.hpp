@@ -1,8 +1,9 @@
 #pragma once
  
-#include "tensor.hpp"
+#include "lamp/core/tensor.hpp"
  
 namespace lamp {
+namespace nn {
  
 /**
  * @brief Base class for all loss functions.
@@ -55,4 +56,5 @@ private:
     float eps_;
 };
  
+} // namespace nn
 } // namespace lamp

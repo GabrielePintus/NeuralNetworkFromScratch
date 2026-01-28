@@ -16,15 +16,15 @@ set(TEST_TARGET "test_linear" CACHE STRING "The test file to compile (test_tenso
 
 # 2. Always build the core library
 add_library(lamp
-    src/tensor.cpp
-    src/linear.cpp
-    src/module.cpp
-    src/sequential.cpp
-    src/optimizer.cpp
-    src/losses.cpp
-    src/activations.cpp
-    src/data_utils.cpp
-    src/dataloader.cpp
+    src/core/tensor.cpp
+    src/nn/linear.cpp
+    src/nn/module.cpp
+    src/nn/sequential.cpp
+    src/optim/optimizer.cpp
+    src/nn/losses.cpp
+    src/nn/activations.cpp
+    src/data/data_utils.cpp
+    src/data/dataloader.cpp
 )
 
 # 3. Check the variable and choose the source file

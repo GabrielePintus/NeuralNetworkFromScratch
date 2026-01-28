@@ -1,6 +1,6 @@
 #pragma once
  
-#include "tensor.hpp"
+#include "lamp/core/tensor.hpp"
 #include <vector>
 #include <memory>
 #include <random>

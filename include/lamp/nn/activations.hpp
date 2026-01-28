@@ -1,8 +1,9 @@
 #pragma once
  
-#include "module.hpp"
+#include "lamp/nn/module.hpp"
  
 namespace lamp {
+namespace nn {
  
 /**
  * @brief ReLU activation module.
@@ -58,4 +59,5 @@ private:
     float negative_slope_;
 };
  
+} // namespace nn
 } // namespace lamp

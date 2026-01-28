@@ -1,7 +1,8 @@
 #pragma once
-#include "module.hpp"
+#include "lamp/nn/module.hpp"
 
 namespace lamp {
+namespace nn {
 
 class Linear : public Module {
 public:
@@ -29,4 +30,5 @@ private:
     void init_parameters();
 };
 
+} // namespace nn
 } // namespace lamp

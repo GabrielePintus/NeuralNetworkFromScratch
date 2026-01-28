@@ -1,6 +1,7 @@
-#include "losses.hpp"
+#include "lamp/nn/losses.hpp"
  
 namespace lamp {
+namespace nn {
  
 Tensor Loss::operator()(const Tensor& predictions, const Tensor& targets) {
     return forward(predictions, targets);
@@ -69,5 +70,6 @@ Tensor CrossEntropyLoss::forward(const Tensor& predictions, const Tensor& target
     return loss;
 }
  
+} // namespace nn
 } // namespace lamp
  
