@@ -17,15 +17,14 @@ LAMP is designed for people who want to understand how neural networks work *und
 - See how layers, losses, and optimizers connect in a training loop.
 - Experiment with a tiny but coherent deep-learning stack that you can extend.
 
-It is not intended to compete with full frameworks like PyTorch or TensorFlow. Instead, it aims to be a clear
-learning resource and a good starting point for experiments.
+It is not intended to compete with full frameworks like PyTorch or TensorFlow.
 
 ## Features
 
 - **Tensor core with autograd**: Multi-dimensional tensors with basic arithmetic, matrix multiplication,
   reductions, and activation functions, plus gradient tracking for learning.
 - **Modules and composition**: Layer abstractions (e.g., `Linear`) and a `Sequential` container for chaining modules.
-- **Loss functions**: MSE, binary cross-entropy, and cross-entropy with softmax.
+- **Loss functions**: MSE, binary cross-entropy, and cross-entropy.
 - **Optimizers**: SGD and Adam to update model parameters.
 - **Data utilities**: Simple datasets and a `DataLoader` for batching and shuffling.
 
