@@ -1,4 +1,4 @@
-#include "tensor.hpp"
+#include "lamp/core/tensor.hpp"
 #include <iostream>
 #include <cassert>
 #include <cmath>
