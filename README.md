@@ -44,12 +44,11 @@ LAMP uses CMake and a standard out-of-source build.
 
 ```bash
 mkdir -p build
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-> If you’re on Windows, open the generated solution in Visual Studio or use `cmake --build` with the desired
-> configuration (e.g., `--config Release`).
+The flag `-DCMAKE_BUILD_TYPE=Release` enables optimizations for better performance. You can also use `Debug` for easier debugging.
 
 ## Running examples
 
