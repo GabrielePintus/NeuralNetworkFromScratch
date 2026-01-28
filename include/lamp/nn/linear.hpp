@@ -1,7 +1,7 @@
 /**
  * @file linear.hpp
  * @brief Fully connected (dense) linear layer implementation.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 

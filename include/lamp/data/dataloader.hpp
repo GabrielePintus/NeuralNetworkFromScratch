@@ -1,7 +1,7 @@
 /**
  * @file dataloader.hpp
  * @brief Dataset and DataLoader classes for batched data iteration.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 

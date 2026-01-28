@@ -1,7 +1,7 @@
 /**
  * @file module.hpp
  * @brief Base class for all neural network modules.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 

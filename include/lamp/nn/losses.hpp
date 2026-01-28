@@ -1,7 +1,7 @@
 /**
  * @file losses.hpp
  * @brief Loss function implementations for neural network training.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 

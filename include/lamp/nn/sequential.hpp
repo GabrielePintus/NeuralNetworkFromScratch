@@ -1,7 +1,7 @@
 /**
  * @file sequential.hpp
  * @brief Sequential container for neural network modules.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 

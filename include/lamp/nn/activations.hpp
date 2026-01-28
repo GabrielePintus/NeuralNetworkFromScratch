@@ -1,7 +1,7 @@
 /**
  * @file activations.hpp
  * @brief Neural network activation function modules.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 

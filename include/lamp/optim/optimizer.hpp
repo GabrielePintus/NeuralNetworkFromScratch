@@ -1,7 +1,7 @@
 /**
  * @file optimizer.hpp
  * @brief Optimization algorithms for neural network training.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 

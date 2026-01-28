@@ -1,7 +1,7 @@
 /**
  * @file data_utils.hpp
  * @brief Utilities for generating synthetic datasets.
- * @author Lamp Project
+ * @author Gabriele Pintus
  * @version 1.0
  */
 
