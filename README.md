@@ -1,5 +1,7 @@
 # LAMP: A Neural Network From Scratch in C++
 
+<img src="Lamp_logo.png" alt="Lamp logo" width="300"/>
+
 ## Overview
 
 **LAMP** is a didactic C++ project that builds a **minimal, PyTorch-like neural network stack** from the ground up.
