@@ -54,22 +54,18 @@ Tensor BCELoss::forward(const Tensor& predictions, const Tensor& targets) {
 CrossEntropyLoss::CrossEntropyLoss(float eps) : eps_(eps) {}
  
 Tensor CrossEntropyLoss::forward(const Tensor& predictions, const Tensor& targets) {
-    // CrossEntropy = -mean(sum(targets * log(softmax(predictions))))
-    // Apply softmax to get probabilities
-    Tensor probs = predictions.softmax();
- 
-    // Clamp for numerical stability
-    Tensor probs_clamped = probs.clamp(eps_, 1.0f - eps_);
- 
-    // log(softmax(predictions))
-    Tensor log_probs = probs_clamped.log();
- 
-    // targets * log(probs)
+    // log_softmax(x) = x - log(sum(exp(x)))
+    Tensor log_probs = predictions.log_softmax();
+
+
+    // targets * log_probs
     Tensor weighted = targets * log_probs;
- 
+
+
     // -mean(sum(...))
     Tensor loss = weighted.sum() * (-1.0f / static_cast<float>(predictions.shape()[0]));
- 
+
+
     return loss;
 }
  

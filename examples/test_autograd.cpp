@@ -35,16 +35,37 @@ void print_progress(size_t epoch, size_t total_epochs, float avg_loss, float acc
 float compute_accuracy(const lamp::Tensor& preds, const lamp::Tensor& targets) {
     size_t correct = 0;
     size_t total = targets.shape()[0];
- 
+    size_t n_classes = targets.shape()[1];
+
+    const float* preds_data = preds.data().data();
+    const float* targets_data = targets.data().data();
+
     for (size_t i = 0; i < total; ++i) {
-        // Binary classification: prediction > 0.5 means class 1
-        float pred_class = preds.data()[i] > 0.5f ? 1.0f : 0.0f;
-        if (pred_class == targets.data()[i]) {
-            correct++;
+        size_t pred_class = 0;
+        size_t true_class = 0;
+
+        float max_pred = preds_data[i * n_classes];
+        float max_target = targets_data[i * n_classes];
+
+        for (size_t j = 1; j < n_classes; ++j) {
+            float p = preds_data[i * n_classes + j];
+            float t = targets_data[i * n_classes + j];
+
+            if (p > max_pred) {
+                max_pred = p;
+                pred_class = j;
+            }
+            if (t > max_target) {
+                max_target = t;
+                true_class = j;
+            }
         }
+
+        if (pred_class == true_class)
+            ++correct;
     }
- 
-    return static_cast<float>(correct) / static_cast<float>(total);
+
+    return float(correct) / float(total);
 }
  
 } // namespace
@@ -56,8 +77,8 @@ int main() {
     std::cout << "=== Moons Classification with DataLoader ===\n\n";
  
     // Generate moons dataset
-    const size_t n_samples = 1000;
-    const size_t n_classes = 5;  // Binary classification
+    const size_t n_samples = 2000;
+    const size_t n_classes = 5;
     const float noise = 0.1f;
     // auto [X, y] = make_moons(n_samples, noise);
     auto [X, y] = make_spirals(n_samples, n_classes, noise);
@@ -73,22 +94,20 @@ int main() {
  
     std::cout << "DataLoader: " << dataloader.num_batches() << " batches of size " << batch_size << "\n\n";
  
-    // Build classifier: 2 -> 64 -> 32 -> 5
-    auto layer1  = std::make_shared<Linear>(2, 64);
-    auto relu1   = std::make_shared<ReLU>();
-    auto layer2  = std::make_shared<Linear>(64, 32);
-    auto relu2   = std::make_shared<ReLU>();
-    auto layer3  = std::make_shared<Linear>(32, 5);
-    auto sigmoid = std::make_shared<Sigmoid>();
- 
-    Sequential model({layer1, relu1, layer2, relu2, layer3, sigmoid});
+    Sequential model({
+        std::make_shared<Linear>(2, 64),
+        std::make_shared<ReLU>(),
+        std::make_shared<Linear>(64, 32),
+        std::make_shared<ReLU>(),
+        std::make_shared<Linear>(32, n_classes)
+    });
  
     // Loss and optimizer
     CrossEntropyLoss criterion;
-    Adam optimizer(model, 0.01f);
+    Adam optimizer(model, 0.001f);
  
     // Training loop
-    const size_t epochs = 400;
+    const size_t epochs = 500;
  
     std::cout << "Training for " << epochs << " epochs...\n";
  
@@ -97,12 +116,12 @@ int main() {
         size_t num_batches = 0;
  
         // Iterate over batches
-        for (auto batch : dataloader) {
+        for (const auto& batch : dataloader) {
             // Forward pass
-            Tensor preds = model.forward(batch.X);
+            Tensor preds = model(batch.X);
  
             // Compute loss
-            Tensor loss = criterion.forward(preds, batch.y);
+            Tensor loss = criterion(preds, batch.y);
  
             // Backward pass
             optimizer.zero_grad();
@@ -141,13 +160,24 @@ int main() {
     for (size_t i = 0; i < 10; ++i) {
         float x1 = X.data()[i * 2];
         float x2 = X.data()[i * 2 + 1];
-        float true_label = y.data()[i];
-        float pred = final_preds.data()[i];
-        float pred_class = pred > 0.5f ? 1.0f : 0.0f;
+        // Find true class (argmax of one-hot target)
+        size_t true_class = 0;
+        for (size_t j = 1; j < n_classes; ++j) {
+            if (y.data()[i * n_classes + j] > y.data()[i * n_classes + true_class]) {
+                true_class = j;
+            }
+        }
+ 
+        // Find predicted class (argmax of logits)
+        size_t pred_class = 0;
+        for (size_t j = 1; j < n_classes; ++j) {
+            if (final_preds.data()[i * n_classes + j] > final_preds.data()[i * n_classes + pred_class]) {
+                pred_class = j;
+            }
+        }
  
         std::cout << "  " << x1 << "\t" << x2 << "\t"
-                  << true_label << "\t" << pred_class
-                  << " (" << pred << ")\n";
+                  << true_class << "\t" << pred_class << "\n";
     }
  
     return 0;

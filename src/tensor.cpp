@@ -94,51 +94,111 @@ Tensor Tensor::uniform(const std::vector<size_t>& shape, float low, float high) 
 // Operators
 // =============================================================
 
+// Tensor Tensor::operator+(const Tensor& other) const {
+//     // If shapes match exactly, use element-wise addition
+//     if (node_->shape == other.node_->shape) {
+//         auto out = zip(other, std::plus<float>());
+//         if (out.node_->requires_grad) {
+//             auto out_node = out.node_;
+//             auto left = node_;
+//             auto right = other.node_;
+//             out_node->parents = {left, right};
+//             out_node->backward = [out_node, left, right]() {
+//                 if (left->requires_grad) {
+//                     if (left->grad.empty()) {
+//                         left->grad.assign(left->data.size(), 0.0f);
+//                     }
+//                     for (size_t i = 0; i < left->grad.size(); ++i) {
+//                         left->grad[i] += out_node->grad[i];
+//                     }
+//                 }
+//                 if (right->requires_grad) {
+//                     if (right->grad.empty()) {
+//                         right->grad.assign(right->data.size(), 0.0f);
+//                     }
+//                     for (size_t i = 0; i < right->grad.size(); ++i) {
+//                         right->grad[i] += out_node->grad[i];
+//                     }
+//                 }
+//             };
+//         }
+//         return out;
+//     }
+    
+//     // Handle broadcasting: (M, N) + (N,)
+//     if (node_->shape.size() == 2 && other.node_->shape.size() == 1) {
+//         if (node_->shape[1] == other.node_->shape[0]) {
+//             return add_broadcast(other);
+//         }
+//     }
+    
+//     // Handle broadcasting: (N,) + (M, N)
+//     if (node_->shape.size() == 1 && other.node_->shape.size() == 2) {
+//         if (node_->shape[0] == other.node_->shape[1]) {
+//             return other.add_broadcast(*this);
+//         }
+//     }
+    
+//     throw std::invalid_argument(
+//         "Tensor Error: Incompatible shapes for addition. Broadcasting not supported for these shapes."
+//     );
+// }
 Tensor Tensor::operator+(const Tensor& other) const {
     // If shapes match exactly, use element-wise addition
     if (node_->shape == other.node_->shape) {
         auto out = zip(other, std::plus<float>());
+
         if (out.node_->requires_grad) {
-            auto out_node = out.node_;
-            auto left = node_;
+            // Keep owning shared_ptr only outside the lambda
+            auto out_node_sp = out.node_;
+            TensorNode* out_node = out_node_sp.get();   // raw pointer to avoid cycles
+
+            auto left  = node_;
             auto right = other.node_;
-            out_node->parents = {left, right};
-            out_node->backward = [out_node, left, right]() {
+
+            out_node_sp->parents = { left, right };
+
+            out_node_sp->backward = [out_node, left, right]() {
+                // NOTE: out_node is a raw ptr, valid as long as this backward runs
+                // (and it will, because the node owns the backward function)
+
                 if (left->requires_grad) {
                     if (left->grad.empty()) {
                         left->grad.assign(left->data.size(), 0.0f);
                     }
                     for (size_t i = 0; i < left->grad.size(); ++i) {
-                        left->grad[i] += out_node->grad[i];
+                        left->grad[i] += out_node->grad[i];   // dL/dleft += dL/dout
                     }
                 }
+
                 if (right->requires_grad) {
                     if (right->grad.empty()) {
                         right->grad.assign(right->data.size(), 0.0f);
                     }
                     for (size_t i = 0; i < right->grad.size(); ++i) {
-                        right->grad[i] += out_node->grad[i];
+                        right->grad[i] += out_node->grad[i];  // dL/dright += dL/dout
                     }
                 }
             };
         }
+
         return out;
     }
-    
+
     // Handle broadcasting: (M, N) + (N,)
     if (node_->shape.size() == 2 && other.node_->shape.size() == 1) {
         if (node_->shape[1] == other.node_->shape[0]) {
             return add_broadcast(other);
         }
     }
-    
+
     // Handle broadcasting: (N,) + (M, N)
     if (node_->shape.size() == 1 && other.node_->shape.size() == 2) {
         if (node_->shape[0] == other.node_->shape[1]) {
             return other.add_broadcast(*this);
         }
     }
-    
+
     throw std::invalid_argument(
         "Tensor Error: Incompatible shapes for addition. Broadcasting not supported for these shapes."
     );
@@ -195,42 +255,58 @@ Tensor Tensor::add_broadcast(const Tensor& vec) const {
     }
     return out;
 }
+
 Tensor Tensor::operator-(const Tensor& other) const {
     auto out = zip(other, std::minus<float>());
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
-        auto left = node_;
+        // Keep shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
+        auto left  = node_;
         auto right = other.node_;
-        out_node->parents = {left, right};
-        out_node->backward = [out_node, left, right]() {
+
+        out_node_sp->parents = { left, right };
+
+        out_node_sp->backward = [out_node, left, right]() {
             if (left->requires_grad) {
                 if (left->grad.empty()) {
                     left->grad.assign(left->data.size(), 0.0f);
                 }
                 for (size_t i = 0; i < left->grad.size(); ++i) {
-                    left->grad[i] += out_node->grad[i];
+                    left->grad[i] += out_node->grad[i];   // dL/dleft = dL/dout
                 }
             }
+
             if (right->requires_grad) {
                 if (right->grad.empty()) {
                     right->grad.assign(right->data.size(), 0.0f);
                 }
                 for (size_t i = 0; i < right->grad.size(); ++i) {
-                    right->grad[i] -= out_node->grad[i];
+                    right->grad[i] -= out_node->grad[i];  // dL/dright = -dL/dout
                 }
             }
         };
     }
+
     return out;
 }
+
 Tensor Tensor::operator*(const Tensor& other) const {
     auto out = zip(other, std::multiplies<float>());
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
-        auto left = node_;
+        // Hold shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
+        auto left  = node_;
         auto right = other.node_;
-        out_node->parents = {left, right};
-        out_node->backward = [out_node, left, right]() {
+
+        out_node_sp->parents = { left, right };
+
+        out_node_sp->backward = [out_node, left, right]() {
             if (left->requires_grad) {
                 if (left->grad.empty()) {
                     left->grad.assign(left->data.size(), 0.0f);
@@ -239,6 +315,7 @@ Tensor Tensor::operator*(const Tensor& other) const {
                     left->grad[i] += out_node->grad[i] * right->data[i];
                 }
             }
+
             if (right->requires_grad) {
                 if (right->grad.empty()) {
                     right->grad.assign(right->data.size(), 0.0f);
@@ -249,17 +326,24 @@ Tensor Tensor::operator*(const Tensor& other) const {
             }
         };
     }
+
     return out;
 }
 
 Tensor Tensor::operator/(const Tensor& other) const {
     auto out = zip(other, std::divides<float>());
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
-        auto left = node_;
+        // Hold shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
+        auto left  = node_;
         auto right = other.node_;
-        out_node->parents = {left, right};
-        out_node->backward = [out_node, left, right]() {
+
+        out_node_sp->parents = { left, right };
+
+        out_node_sp->backward = [out_node, left, right]() {
             if (left->requires_grad) {
                 if (left->grad.empty()) {
                     left->grad.assign(left->data.size(), 0.0f);
@@ -268,26 +352,35 @@ Tensor Tensor::operator/(const Tensor& other) const {
                     left->grad[i] += out_node->grad[i] / right->data[i];
                 }
             }
+
             if (right->requires_grad) {
                 if (right->grad.empty()) {
                     right->grad.assign(right->data.size(), 0.0f);
                 }
                 for (size_t i = 0; i < right->grad.size(); ++i) {
-                    right->grad[i] -= out_node->grad[i] * left->data[i] / (right->data[i] * right->data[i]);
+                    right->grad[i] -= out_node->grad[i] * left->data[i]
+                                      / (right->data[i] * right->data[i]);
                 }
             }
         };
     }
+
     return out;
 }
 
 Tensor Tensor::operator+(float v) const {
     auto out = map([v](float x){ return x + v; });
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
+        // Keep shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
         auto left = node_;
-        out_node->parents = {left};
-        out_node->backward = [out_node, left]() {
+
+        out_node_sp->parents = { left };
+
+        out_node_sp->backward = [out_node, left]() {
             if (!left->requires_grad) {
                 return;
             }
@@ -299,16 +392,23 @@ Tensor Tensor::operator+(float v) const {
             }
         };
     }
+
     return out;
 }
 
 Tensor Tensor::operator-(float v) const {
     auto out = map([v](float x){ return x - v; });
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
+        // Keep shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
         auto left = node_;
-        out_node->parents = {left};
-        out_node->backward = [out_node, left]() {
+
+        out_node_sp->parents = { left };
+
+        out_node_sp->backward = [out_node, left]() {
             if (!left->requires_grad) {
                 return;
             }
@@ -320,16 +420,23 @@ Tensor Tensor::operator-(float v) const {
             }
         };
     }
+
     return out;
 }
 
 Tensor Tensor::operator*(float v) const {
     auto out = map([v](float x){ return x * v; });
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
+        // Keep shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
         auto left = node_;
-        out_node->parents = {left};
-        out_node->backward = [out_node, left, v]() {
+
+        out_node_sp->parents = { left };
+
+        out_node_sp->backward = [out_node, left, v]() {
             if (!left->requires_grad) {
                 return;
             }
@@ -341,16 +448,23 @@ Tensor Tensor::operator*(float v) const {
             }
         };
     }
+
     return out;
 }
 
 Tensor Tensor::operator/(float v) const {
     auto out = map([v](float x){ return x / v; });
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
+        // Keep shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
         auto left = node_;
-        out_node->parents = {left};
-        out_node->backward = [out_node, left, v]() {
+
+        out_node_sp->parents = { left };
+
+        out_node_sp->backward = [out_node, left, v]() {
             if (!left->requires_grad) {
                 return;
             }
@@ -362,16 +476,23 @@ Tensor Tensor::operator/(float v) const {
             }
         };
     }
+
     return out;
 }
 
 Tensor Tensor::pow(float exponent) const {
     auto out = map([exponent](float x){ return std::pow(x, exponent); });
+
     if (out.node_->requires_grad) {
-        auto out_node = out.node_;
+        // Hold shared_ptr only outside the lambda
+        auto out_node_sp = out.node_;
+        TensorNode* out_node = out_node_sp.get();   // raw pointer (no ownership)
+
         auto left = node_;
-        out_node->parents = {left};
-        out_node->backward = [out_node, left, exponent]() {
+
+        out_node_sp->parents = { left };
+
+        out_node_sp->backward = [out_node, left, exponent]() {
             if (!left->requires_grad) {
                 return;
             }
@@ -379,10 +500,13 @@ Tensor Tensor::pow(float exponent) const {
                 left->grad.assign(left->data.size(), 0.0f);
             }
             for (size_t i = 0; i < left->grad.size(); ++i) {
-                left->grad[i] += out_node->grad[i] * exponent * std::pow(left->data[i], exponent - 1);
+                left->grad[i] += out_node->grad[i]
+                               * exponent
+                               * std::pow(left->data[i], exponent - 1);
             }
         };
     }
+
     return out;
 }
 
@@ -395,7 +519,7 @@ Tensor Tensor::softmax() const {
     size_t dim = node_->shape.back();
     size_t outer_size = node_->data.size() / dim;
     std::vector<float> result(node_->data.size());
-    
+ 
     for (size_t i = 0; i < outer_size; ++i) {
         // Find max for numerical stability
         float max_val = node_->data[i * dim];
@@ -404,23 +528,116 @@ Tensor Tensor::softmax() const {
                 max_val = node_->data[i * dim + j];
             }
         }
-        
+ 
         // Compute exponentials and sum
         float sum_exp = 0.0f;
         for (size_t j = 0; j < dim; ++j) {
             result[i * dim + j] = std::exp(node_->data[i * dim + j] - max_val);
             sum_exp += result[i * dim + j];
         }
-        
+ 
         // Normalize
         for (size_t j = 0; j < dim; ++j) {
             result[i * dim + j] /= sum_exp;
         }
     }
-    
-    return Tensor(std::move(result), node_->shape, node_->requires_grad);
+ 
+    Tensor out(std::move(result), node_->shape, node_->requires_grad);
+ 
+    if (out.node_->requires_grad) {
+        auto out_node = out.node_;
+        auto left = node_;
+        out_node->parents = {left};
+        out_node->backward = [out_node, left, dim, outer_size]() {
+            if (!left->requires_grad) {
+                return;
+            }
+            if (left->grad.empty()) {
+                left->grad.assign(left->data.size(), 0.0f);
+            }
+            // Softmax backward: d_input = softmax * (d_output - sum(d_output * softmax))
+            for (size_t i = 0; i < outer_size; ++i) {
+                // Compute dot product of gradient and softmax output for this row
+                float dot = 0.0f;
+                for (size_t j = 0; j < dim; ++j) {
+                    dot += out_node->grad[i * dim + j] * out_node->data[i * dim + j];
+                }
+                // Compute gradient for each element
+                for (size_t j = 0; j < dim; ++j) {
+                    left->grad[i * dim + j] += out_node->data[i * dim + j] *
+                        (out_node->grad[i * dim + j] - dot);
+                }
+            }
+        };
+    }
+ 
+    return out;
 }
 
+Tensor Tensor::log_softmax() const {
+    // Log-Softmax along the last dimension
+    // log_softmax(x) = x - max(x) - log(sum(exp(x - max(x))))
+    if (node_->shape.empty()) {
+        throw std::invalid_argument("Log-Softmax requires at least 1D tensor.");
+    }
+ 
+    size_t dim = node_->shape.back();
+    size_t outer_size = node_->data.size() / dim;
+    std::vector<float> result(node_->data.size());
+ 
+    for (size_t i = 0; i < outer_size; ++i) {
+        // Find max for numerical stability
+        float max_val = node_->data[i * dim];
+        for (size_t j = 1; j < dim; ++j) {
+            if (node_->data[i * dim + j] > max_val) {
+                max_val = node_->data[i * dim + j];
+            }
+        }
+ 
+        // Compute sum of exponentials
+        float sum_exp = 0.0f;
+        for (size_t j = 0; j < dim; ++j) {
+            sum_exp += std::exp(node_->data[i * dim + j] - max_val);
+        }
+ 
+        // Compute log_softmax: x - max - log(sum_exp)
+        float log_sum_exp = std::log(sum_exp);
+        for (size_t j = 0; j < dim; ++j) {
+            result[i * dim + j] = node_->data[i * dim + j] - max_val - log_sum_exp;
+        }
+    }
+ 
+    Tensor out(std::move(result), node_->shape, node_->requires_grad);
+ 
+    if (out.node_->requires_grad) {
+        auto out_node = out.node_;
+        auto parent = node_;
+        out_node->parents = {parent};
+        out_node->backward = [out_node, parent, dim, outer_size]() {
+            if (!parent->requires_grad) {
+                return;
+            }
+            if (parent->grad.empty()) {
+                parent->grad.assign(parent->data.size(), 0.0f);
+            }
+            // Gradient of log_softmax: grad_input = grad_output - softmax(x) * sum(grad_output)
+            for (size_t i = 0; i < outer_size; ++i) {
+                // Compute softmax for this row (from stored log_softmax output)
+                // softmax = exp(log_softmax)
+                float grad_sum = 0.0f;
+                for (size_t j = 0; j < dim; ++j) {
+                    grad_sum += out_node->grad[i * dim + j];
+                }
+                for (size_t j = 0; j < dim; ++j) {
+                    float softmax_val = std::exp(out_node->data[i * dim + j]);
+                    parent->grad[i * dim + j] += out_node->grad[i * dim + j] - softmax_val * grad_sum;
+                }
+            }
+        };
+    }
+ 
+    return out;
+}
 
 // =============================================================
 // Matrix Operations
@@ -758,6 +975,13 @@ void Tensor::backward() {
             current->backward();
         }
     }
+
+    // After backward pass completes, release the graph
+    for (auto& current : topo) {
+        current->backward = nullptr;  // Release captured references
+        current->parents.clear();     // Break parent reference chain
+    }
+
 }
 
 // =============================================================

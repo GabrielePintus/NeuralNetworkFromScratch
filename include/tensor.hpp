@@ -150,6 +150,13 @@ public:
      */
     Tensor softmax() const;
 
+    /**
+     * @brief Applies the Log-Softmax function along the last dimension.
+     * Computes log(softmax(x)) in a numerically stable way.
+     * @return Tensor The log-softmax tensor.
+     */
+    Tensor log_softmax() const;
+
     // =============================================================
     // Matrix Operations
     // =============================================================
